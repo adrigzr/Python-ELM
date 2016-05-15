@@ -54,7 +54,7 @@ Label Legend:
   ELM(20,rbf(0.1))  :20 rbf units gamma=0.1
 
 """
-print __doc__
+print(__doc__)
 
 
 # Code source: Gael Varoqueux
@@ -65,12 +65,11 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-
 from matplotlib.colors import ListedColormap
+from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_moons, make_circles, make_classification
-from sklearn.preprocessing import StandardScaler
-from sklearn.cross_validation import train_test_split
 from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
 
 from elm import GenELMClassifier
 from random_layer import RBFRandomLayer, MLPRandomLayer
@@ -85,7 +84,7 @@ def get_data_bounds(X):
     xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
                          np.arange(y_min, y_max, h))
 
-    return (x_min, x_max, y_min, y_max, xx, yy)
+    return x_min, x_max, y_min, y_max, xx, yy
 
 
 def plot_data(ax, X_train, y_train, X_test, y_test, xx, yy):
@@ -146,7 +145,7 @@ def make_classifiers():
     srhl_hardlim = MLPRandomLayer(n_hidden=nh, activation_func='hardlim')
 
     # use gaussian RBF
-    srhl_rbf = RBFRandomLayer(n_hidden=nh*2, rbf_width=0.1, random_state=0)
+    srhl_rbf = RBFRandomLayer(n_hidden=nh * 2, rbf_width=0.1, random_state=0)
 
     log_reg = LogisticRegression()
 
@@ -166,7 +165,7 @@ def make_linearly_separable():
                                n_clusters_per_class=1)
     rng = np.random.RandomState(2)
     X += 2 * rng.uniform(size=X.shape)
-    return (X, y)
+    return X, y
 
 ###############################################################################
 

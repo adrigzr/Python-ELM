@@ -15,18 +15,17 @@ They are used in the implementation of Extreme Learning Machines (ELMs),
 but can be used as a general input mapping.
 """
 
+import collections
 from abc import ABCMeta, abstractmethod
-
 from math import sqrt
 
 import numpy as np
 import scipy.sparse as sp
 from scipy.spatial.distance import cdist, pdist, squareform
-
-from sklearn.metrics import pairwise_distances
-from sklearn.utils import check_random_state, atleast2d_or_csr
-from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.metrics import pairwise_distances
+from sklearn.utils import check_random_state, check_array
+from sklearn.utils.extmath import safe_sparse_dot
 
 __all__ = ['RandomLayer',
            'MLPRandomLayer',
@@ -35,16 +34,15 @@ __all__ = ['RandomLayer',
            ]
 
 
-class BaseRandomLayer(BaseEstimator, TransformerMixin):
+class BaseRandomLayer(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
     """Abstract Base Class for random  layers"""
-    __metaclass__ = ABCMeta
 
     _internal_activation_funcs = dict()
 
     @classmethod
     def activation_func_names(cls):
         """Get list of internal activation function names"""
-        return cls._internal_activation_funcs.keys()
+        return list(cls._internal_activation_funcs.keys())
 
     # take n_hidden and random_state, init components_ and
     # input_activations_
@@ -80,7 +78,7 @@ class BaseRandomLayer(BaseEstimator, TransformerMixin):
 
         acts = self.input_activations_
 
-        if (callable(self.activation_func)):
+        if (isinstance(self.activation_func, collections.Callable)):
             args_dict = self.activation_args if (self.activation_args) else {}
             X_new = self.activation_func(acts, **args_dict)
         else:
@@ -108,7 +106,7 @@ class BaseRandomLayer(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X)
 
         self._generate_components(X)
 
@@ -130,7 +128,7 @@ class BaseRandomLayer(BaseEstimator, TransformerMixin):
         -------
         X_new : numpy array of shape [n_samples, n_components]
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X)
 
         if (self.components_ is None):
             raise ValueError('No components initialized')
@@ -223,7 +221,7 @@ class RandomLayer(BaseRandomLayer):
     _inv_tribas = (lambda x: np.clip(np.fabs(x), 0.0, 1.0))
 
     # sigmoid activation function
-    _sigmoid = (lambda x: 1.0/(1.0 + np.exp(-x)))
+    _sigmoid = (lambda x: 1.0 / (1.0 + np.exp(-x)))
 
     # hard limit activation function
     _hardlim = (lambda x: np.array(x > 0.0, dtype=float))
@@ -239,7 +237,7 @@ class RandomLayer(BaseRandomLayer):
 
     # inverse multiquadric RBF
     _inv_multiquadric = (lambda x:
-                         1.0/(np.sqrt(1.0 + pow(x, 2.0))))
+                         1.0 / (np.sqrt(1.0 + pow(x, 2.0))))
 
     # internal activation function table
     _internal_activation_funcs = {'sine': np.sin,
@@ -264,7 +262,7 @@ class RandomLayer(BaseRandomLayer):
                                           activation_args=activation_args)
 
         if (isinstance(self.activation_func, str)):
-            func_names = self._internal_activation_funcs.keys()
+            func_names = list(self._internal_activation_funcs.keys())
             if (self.activation_func not in func_names):
                 msg = "unknown activation function '%s'" % self.activation_func
                 raise ValueError(msg)
@@ -295,7 +293,7 @@ class RandomLayer(BaseRandomLayer):
 
             n_centers = centers.shape[0]
             max_dist = np.max(pairwise_distances(centers))
-            radii = np.ones(n_centers) * max_dist/sqrt(2.0 * n_centers)
+            radii = np.ones(n_centers) * max_dist / sqrt(2.0 * n_centers)
 
         self.components_['radii'] = radii
 
@@ -311,16 +309,16 @@ class RandomLayer(BaseRandomLayer):
             n_features = X.shape[1]
 
             if (sparse):
-                fxr = xrange(n_features)
+                fxr = range(n_features)
                 cols = [X.getcol(i) for i in fxr]
 
                 min_dtype = X.dtype.type(1.0e10)
                 sp_min = lambda col: np.minimum(min_dtype, np.min(col.data))
-                min_Xs = np.array(map(sp_min, cols))
+                min_Xs = np.array(list(map(sp_min, cols)))
 
                 max_dtype = X.dtype.type(-1.0e10)
                 sp_max = lambda col: np.maximum(max_dtype, np.max(col.data))
-                max_Xs = np.array(map(sp_max, cols))
+                max_Xs = np.array(list(map(sp_max, cols)))
             else:
                 min_Xs = X.min(axis=0)
                 max_Xs = X.max(axis=0)
@@ -382,7 +380,7 @@ class RandomLayer(BaseRandomLayer):
             radii = self.components_['radii']
             centers = self.components_['centers']
             scale = self.rbf_width * (1.0 - self.alpha)
-            rbf_acts = scale * cdist(X, centers)/radii
+            rbf_acts = scale * cdist(X, centers) / radii
 
         self.input_activations_ = mlp_acts + rbf_acts
 
@@ -511,15 +509,15 @@ class GRBFRandomLayer(RBFRandomLayer):
         centers = self.components_['centers']
         sorted_distances = np.sort(squareform(pdist(centers)))
         self.dF_vals = sorted_distances[:, -1]
-        self.dN_vals = sorted_distances[:, 1]/100.0
-        #self.dN_vals = 0.0002 * np.ones(self.dF_vals.shape)
+        self.dN_vals = sorted_distances[:, 1] / 100.0
+        # self.dN_vals = 0.0002 * np.ones(self.dF_vals.shape)
 
         tauNum = np.log(np.log(self.grbf_lambda) /
                         np.log(1.0 - self.grbf_lambda))
 
-        tauDenom = np.log(self.dF_vals/self.dN_vals)
+        tauDenom = np.log(self.dF_vals / self.dN_vals)
 
-        self.tau_vals = tauNum/tauDenom
+        self.tau_vals = tauNum / tauDenom
 
         self._extra_args['taus'] = self.tau_vals
 
@@ -527,5 +525,5 @@ class GRBFRandomLayer(RBFRandomLayer):
     def _compute_radii(self):
         """Generate radii"""
 
-        denom = pow(-np.log(self.grbf_lambda), 1.0/self.tau_vals)
-        self.components_['radii'] = self.dF_vals/denom
+        denom = pow(-np.log(self.grbf_lambda), 1.0 / self.tau_vals)
+        self.components_['radii'] = self.dF_vals / denom

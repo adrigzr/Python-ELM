@@ -25,11 +25,10 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy.linalg import pinv2
-
-from sklearn.utils import as_float_array
-from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import as_float_array
+from sklearn.utils.extmath import safe_sparse_dot
 
 from random_layer import RandomLayer, MLPRandomLayer
 
@@ -41,14 +40,13 @@ __all__ = ["ELMRegressor",
 
 # BaseELM class, regressor and hidden_layer attributes
 # and provides defaults for docstrings
-class BaseELM(BaseEstimator):
+class BaseELM(BaseEstimator, metaclass=ABCMeta):
     """
     Base class for ELMs.
 
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
-    __metaclass__ = ABCMeta
 
     def __init__(self, hidden_layer, regressor):
         self.regressor = regressor
@@ -259,6 +257,7 @@ class GenELMClassifier(BaseELM, ClassifierMixin):
               Theory and Applications", Neurocomputing, vol. 70, pp. 489-501,
               2006.
     """
+
     def __init__(self,
                  hidden_layer=MLPRandomLayer(random_state=0),
                  binarizer=LabelBinarizer(-1, 1),
