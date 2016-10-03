@@ -50,7 +50,8 @@ class BaseELM(BaseEstimator):
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, hidden_layer, regressor):
+    def __init__(self, hidden_layer, regressor, **kwargs):
+        super(BaseELM, self).__init__(**kwargs)
         self.regressor = regressor
         self.hidden_layer = hidden_layer
 
@@ -262,9 +263,9 @@ class GenELMClassifier(BaseELM, ClassifierMixin):
     def __init__(self,
                  hidden_layer=MLPRandomLayer(random_state=0),
                  binarizer=LabelBinarizer(-1, 1),
-                 regressor=None):
+                 regressor=None, **kwargs):
 
-        super(GenELMClassifier, self).__init__(hidden_layer, regressor)
+        super(GenELMClassifier, self).__init__(hidden_layer, regressor, **kwargs)
 
         self.binarizer = binarizer
 
