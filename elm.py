@@ -48,7 +48,8 @@ class BaseELM(BaseEstimator, metaclass=ABCMeta):
     Use derived classes instead.
     """
 
-    def __init__(self, hidden_layer, regressor):
+    def __init__(self, hidden_layer, regressor, **kwargs):
+        super(BaseELM, self).__init__(**kwargs)
         self.regressor = regressor
         self.hidden_layer = hidden_layer
 
@@ -261,9 +262,9 @@ class GenELMClassifier(BaseELM, ClassifierMixin):
     def __init__(self,
                  hidden_layer=MLPRandomLayer(random_state=0),
                  binarizer=LabelBinarizer(-1, 1),
-                 regressor=None):
+                 regressor=None, **kwargs):
 
-        super(GenELMClassifier, self).__init__(hidden_layer, regressor)
+        super(GenELMClassifier, self).__init__(hidden_layer, regressor, **kwargs)
 
         self.binarizer = binarizer
 
@@ -362,9 +363,10 @@ class ELMRegressor(BaseEstimator, RegressorMixin):
         Function used to transform input activation
 
         It must be one of 'tanh', 'sine', 'tribas', 'inv_tribase', 'sigmoid',
-        'hardlim', 'softlim', 'gaussian', 'multiquadric', 'inv_multiquadric' or
-        a callable.  If none is given, 'tanh' will be used. If a callable
-        is given, it will be used to compute the hidden unit activations.
+        'hardlim', 'softlim', 'gaussian', 'multiquadric', 'inv_multiquadric',
+        'reclinear' or a callable.  If none is given, 'tanh' will be used. 
+        If a callable is given, it will be used to compute the hidden unit
+        activations.
 
     `activation_args` : dictionary, optional (default=None)
         Supplies keyword arguments for a callable activation_func
@@ -499,9 +501,10 @@ class ELMClassifier(ELMRegressor):
         Function used to transform input activation
 
         It must be one of 'tanh', 'sine', 'tribas', 'inv_tribase', 'sigmoid',
-        'hardlim', 'softlim', 'gaussian', 'multiquadric', 'inv_multiquadric' or
-        a callable.  If none is given, 'tanh' will be used. If a callable
-        is given, it will be used to compute the hidden unit activations.
+        'hardlim', 'softlim', 'gaussian', 'multiquadric', 'inv_multiquadric',
+        'reclinear' or a callable.  If none is given, 'tanh' will be used. 
+        If a callable is given, it will be used to compute the hidden unit
+        activations.
 
     `activation_args` : dictionary, optional (default=None)
         Supplies keyword arguments for a callable activation_func
